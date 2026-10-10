@@ -76,10 +76,15 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
 
     graph = build_video_filter(plan, start, s.out_width, s.out_height)
 
-    # captions (+ optional hook line) are chained after reframing
+    # captions (+ optional hook line) are chained after reframing.
+    # Some ffmpeg builds (e.g. minimal Windows static builds) ship without
+    # libass; degrade gracefully to no captions instead of crashing.
+    can_caption = ffmpeg_util.has_filter("ass")
     tail = ""
     ass_files: list[Path] = []
-    if words:
+    if not can_caption:
+        log.warning("ffmpeg build lacks the 'ass' filter — captions will be skipped")
+    if words and can_caption:
         cap = out_path.with_suffix(".ass")
         cap.write_text(
             build_ass(words, clip_start=start, clip_end=end, style_name=caption_style),
@@ -88,7 +93,7 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
         if cap.stat().st_size > 200:
             ass_files.append(cap)
 
-    if hook_text.strip() and s.enable_hook_card:
+    if hook_text.strip() and s.enable_hook_card and can_caption:
         hook = out_path.with_name(out_path.stem + "_hook.ass")
         hook.write_text(_hook_ass(hook_text, s.hook_card_sec), encoding="utf-8", newline="\n")
         ass_files.append(hook)
