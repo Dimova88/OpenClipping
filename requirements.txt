@@ -1,0 +1,25 @@
+# OpenClipping — 100% free runtime stack (no paid services required)
+# Core web + job control
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+pydantic>=2.7
+apscheduler>=3.10
+
+# Media I/O
+yt-dlp>=2025.1.15
+imageio-ffmpeg>=0.5.1     # bundles a static ffmpeg 7.x with libass/libx264 (used when no system ffmpeg)
+
+# Frame analysis for auto-reframe (offline, no model downloads)
+opencv-python-headless>=4.10,<4.12
+numpy>=1.26
+
+# Publishing
+requests>=2.32
+
+# Optional: fully local transcription (zero API calls). Needs HF model access.
+# faster-whisper>=1.0.0
+
+# YouTube publishing (OAuth). Imports are lazy — safe to omit if unused.
+google-api-python-client>=2.130
+google-auth-oauthlib>=1.2

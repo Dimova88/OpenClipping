@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenClipping — free & unlimited AI clipping</title>
+<style>
+  :root{--bg:#0b0d12;--card:#141824;--line:#242b3d;--txt:#e8ecf6;--mut:#93a0b8;--acc:#22d3ee;--acc2:#a78bfa;--bad:#f87171;--ok:#34d399}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b0d12ee;backdrop-filter:blur(8px)}
+  h1{font-size:20px} h1 span{color:var(--acc)}
+  .stats{display:flex;gap:20px;color:var(--mut);font-size:13px}
+  .stats b{color:var(--txt)}
+  main{max-width:1200px;margin:0 auto;padding:24px}
+  .grid{display:grid;gap:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card h2{font-size:15px;margin-bottom:12px;color:var(--acc2)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  input,select,button{border-radius:10px;border:1px solid var(--line);background:#0d1119;color:var(--txt);padding:11px 13px;font-size:14px}
+  input[type=text]{flex:1;min-width:260px}
+  button{cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#06121a;font-weight:600}
+  button.ghost{background:transparent;color:var(--txt);border:1px solid var(--line);font-weight:500}
+  button.small{padding:7px 12px;font-size:12px}
+  .mut{color:var(--mut);font-size:12.5px}
+  .accounts{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#0d1119;font-size:13px}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+  .job{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:#10141f}
+  .job .top{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+  .status{font-size:12px;padding:3px 10px;border-radius:999px;background:#1b2334;color:var(--acc)}
+  .status.failed{color:var(--bad)} .status.ready,.status.published{color:var(--ok)}
+  .bar{height:6px;border-radius:99px;background:#1b2334;overflow:hidden}
+  .bar>div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
+  .clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:14px}
+  .clip{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1119;display:flex;flex-direction:column}
+  .clip video{width:100%;aspect-ratio:9/16;background:#000;object-fit:cover}
+  .clip .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .score{font-size:12px;color:var(--ok);font-weight:700}
+  .tags{color:var(--acc);font-size:11.5px;word-break:break-word}
+  .clip .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .empty{color:var(--mut);text-align:center;padding:30px}
+  a{color:var(--acc)}
+  .flex{display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Open<span>Clipping</span> ⚡ free · unlimited · self-hosted</h1>
+  <div class="stats">
+    <span><b id="st-jobs">0</b> jobs</span>
+    <span><b id="st-clips">0</b> clips</span>
+    <span><b id="st-pub">0</b> published</span>
+  </div>
+</header>
+<main class="grid">
+  <section class="card">
+    <h2>1 · Feed it a video</h2>
+    <div class="row">
+      <input id="src" type="text" placeholder="Paste a YouTube / TikTok / Whop / direct MP4 URL…">
+      <select id="reframe">
+        <option value="auto">Auto reframe (face-track)</option>
+        <option value="track">Face-track</option>
+        <option value="blur_pad">Blur-pad (keep full frame)</option>
+        <option value="center">Center crop</option>
+      </select>
+      <select id="capstyle">
+        <option value="bold_pop">Captions: bold pop</option>
+        <option value="clean">Captions: clean</option>
+        <option value="neon">Captions: neon</option>
+        <option value="minimal">Captions: minimal</option>
+      </select>
+      <button onclick="submitUrl()">Clip it</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <input id="file" type="file" accept="video/*">
+      <button class="ghost" onclick="submitFile()">Upload & clip</button>
+      <span class="mut">Tip: add your Gemini key in <code>.env</code> for real captions; without it the app still runs offline.</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="flex"><h2>2 · Connect publishing accounts</h2></div>
+    <div class="accounts" id="accounts"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost small" onclick="connect('instagram')">+ Instagram (Reels)</button>
+      <button class="ghost small" onclick="connect('tiktok')">+ TikTok</button>
+      <button class="ghost small" onclick="connect('youtube')">+ YouTube (Shorts)</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 · Jobs & viral clips</h2>
+    <div id="jobs"><div class="empty">No jobs yet — paste a URL above to start.</div></div>
+  </section>
+</main>
+
+<script>
+async function api(p, opts){ const r = await fetch(p, opts); if(!r.ok){ const t=await r.text(); throw new Error(t); } return r.json(); }
+async function submitUrl(){
+  const src = document.getElementById('src').value.trim(); if(!src) return alert('paste a URL');
+  const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
+  const fd = new FormData(); fd.append('source', src); fd.append('options', options);
+  await api('/api/jobs', {method:'POST', body:fd}); refresh();
+}
+async function submitFile(){
+  const f = document.getElementById('file').files[0]; if(!f) return alert('choose a file');
+  const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
+  const fd = new FormData(); fd.append('file', f); fd.append('options', options);
+  await api('/api/jobs/upload', {method:'POST', body:fd}); refresh();
+}
+async function connect(p){ const d = await api('/api/accounts/connect/'+p); location.href = d.url; }
+async function publish(clipId, accountId, btn){
+  btn.disabled = true; btn.textContent='…';
+  try{ const fd=new FormData(); fd.append('account_id', accountId);
+       await api('/api/clips/'+clipId+'/publish', {method:'POST', body:fd}); refresh(); }
+  catch(e){ alert(e.message); }
+  btn.disabled=false; btn.textContent='post';
+}
+const ACTIVE = new Set(['queued','downloading','transcribing','analyzing','rendering','publishing']);
+async function refresh(){
+  try{
+    const [stats, jobs, accounts] = await Promise.all([api('/api/stats'), api('/api/jobs'), api('/api/accounts')]);
+    st_jobs.textContent=stats.jobs; st_clips.textContent=stats.clips; st_pub.textContent=stats.published;
+
+    const acc = accounts.accounts;
+    const accEl = document.getElementById('accounts');
+    accEl.innerHTML = acc.length ? acc.map(a=>`<span class="chip"><span class="dot"></span>${a.platform} · ${a.handle||'connected'}</span>`).join('')
+      : '<span class="mut">No accounts connected. Connect at least one to auto-publish.</span>';
+
+    const jobsEl = document.getElementById('jobs');
+    if(!jobs.jobs.length){ jobsEl.innerHTML = '<div class="empty">No jobs yet — paste a URL above to start.</div>'; return; }
+    jobsEl.innerHTML = jobs.jobs.slice(0,30).map(j=>jobHtml(j, acc)).join('');
+    if(jobs.jobs.some(j=>ACTIVE.has(j.status))) setTimeout(refresh, 2500);
+  }catch(e){ console.error(e); }
+}
+function esc(s){ return (s||'').replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+function jobHtml(j, accounts){
+  const pct = Math.round((j.progress||0)*100);
+  const clips = (j.clips||[]).map(c=>`
+    <div class="clip">
+      <video src="/media/${c.file.split('/').pop()}" controls preload="metadata"></video>
+      <div class="body">
+        <div class="flex"><span class="score">🔥 ${Math.round(c.score)}</span><span class="mut">${Math.round(c.duration)}s</span></div>
+        <div><b>${esc(c.highlight?c.highlight.title:'Clip')}</b></div>
+        <div class="mut">${esc(c.highlight?c.highlight.caption:'')}</div>
+        <div class="tags">${(c.highlight&&c.highlight.hashtags||[]).map(t=>'#'+t).join(' ')}</div>
+        <div class="actions">${accounts.map(a=>`<button class="small" onclick="publish('${c.id}','${a.id}',this)">post→${a.platform}</button>`).join('')}
+          ${Object.keys(c.published_to||{}).length?`<span class="mut">sent: ${Object.keys(c.published_to).join(', ')}</span>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+  return `<div class="job">
+    <div class="top"><span><b>${esc(j.title||j.source)}</b> <span class="mut">· ${j.transcript_source||''}</span></span>
+      <span class="status ${j.status}">${j.status}</span></div>
+    <div class="bar"><div style="width:${pct}%"></div></div>
+    <div class="mut" style="margin-top:6px">${esc(j.message||j.error||'')}</div>
+    <div class="clips">${clips}</div>
+  </div>`;
+}
+refresh(); setInterval(()=>{ if(document.hasFocus()) refresh(); }, 8000);
+</script>
+</body>
+</html>
