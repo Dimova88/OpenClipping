@@ -101,13 +101,15 @@ async function submitUrl(){
   const src = document.getElementById('src').value.trim(); if(!src) return alert('paste a URL');
   const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
   const fd = new FormData(); fd.append('source', src); fd.append('options', options);
-  await api('/api/jobs', {method:'POST', body:fd}); refresh();
+  try{ await api('/api/jobs', {method:'POST', body:fd}); refresh(); }
+  catch(e){ alert('Could not start job: '+e.message); }
 }
 async function submitFile(){
   const f = document.getElementById('file').files[0]; if(!f) return alert('choose a file');
   const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
   const fd = new FormData(); fd.append('file', f); fd.append('options', options);
-  await api('/api/jobs/upload', {method:'POST', body:fd}); refresh();
+  try{ await api('/api/jobs/upload', {method:'POST', body:fd}); refresh(); }
+  catch(e){ alert('Could not start job: '+e.message); }
 }
 async function connect(p){ const d = await api('/api/accounts/connect/'+p); location.href = d.url; }
 async function publish(clipId, accountId, btn){

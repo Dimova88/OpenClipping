@@ -34,6 +34,9 @@ def _ydl_opts(out_dir: Path, progress, cookies: str | None, title_holder: dict) 
         "socket_timeout": 30,
         "retries": 3,
         "progress_hooks": [progress],
+        # Let yt-dlp merge video+audio using *our* bundled/static ffmpeg even
+        # when the user has no system ffmpeg on PATH (typical fresh Windows).
+        "ffmpeg_location": str(Path(ffmpeg_util.get_ffmpeg()).parent),
     }
     if cookies and Path(cookies).exists():
         opts["cookiefile"] = cookies
