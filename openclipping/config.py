@@ -69,7 +69,7 @@ class Settings:
     gemini_timeout: int = field(default_factory=lambda: _env_int("GEMINI_TIMEOUT", 300))
     # Free tier can be as tight as ~20 requests/day on some projects, so pace
     # ourselves instead of hammering and eating 429s.
-    gemini_min_interval: float = field(default_factory=lambda: _env_float("GEMINI_MIN_INTERVAL", 6.5))
+    gemini_min_interval: float = field(default_factory=lambda: _env_float("GEMINI_MIN_INTERVAL", 1.0))
     gemini_max_retries: int = field(default_factory=lambda: _env_int("GEMINI_MAX_RETRIES", 5))
 
     # Local transcription fallback (zero API cost, needs HF model access once)

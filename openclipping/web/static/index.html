@@ -293,6 +293,7 @@ async function delClip(id, btn){
 let DIAG = null;
 async function loadDiag(ping){
   try{
+    if(ping) $('diag').innerHTML = '<div class="drow"><span class="s warn"></span>Testing Gemini… (a few seconds)</div>';
     DIAG = await api('/api/diagnostics'+(ping?'?ping=1':''));
     const gemVal = DIAG.gemini_ok===true ? ('WORKS ✔ ('+(DIAG.gemini_model||'')+')')
                  : DIAG.gemini_ok===false ? ('FAILED: '+(DIAG.gemini_error||''))

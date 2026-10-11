@@ -117,6 +117,30 @@ def _gemini_transcribe(video: Path, duration: float) -> Transcript:
 _whisper_model = None
 
 
+def _patch_pyav() -> None:
+    """faster-whisper 1.2.1 passes metadata_errors to av.open, which PyAV 19 removed.
+
+    Strip the kwarg at runtime so already-installed (av>=19) environments work
+    without a reinstall. Fresh installs are also pinned to av<19.
+    """
+    try:
+        import av
+        import inspect
+
+        if "metadata_errors" in inspect.signature(av.open).parameters:
+            return
+        _orig = av.open
+
+        def _patched(*args, **kwargs):
+            kwargs.pop("metadata_errors", None)
+            return _orig(*args, **kwargs)
+
+        av.open = _patched
+        log.info("patched av.open for PyAV>=19 (faster-whisper compat)")
+    except Exception:
+        pass
+
+
 def _whisper_available() -> bool:
     global _whisper_model
     if _whisper_model is not None:
@@ -126,6 +150,7 @@ def _whisper_available() -> bool:
     except Exception:
         return False
     try:
+        _patch_pyav()
         from .config import get_settings
         _whisper_model = WhisperModel(get_settings().whisper_model, device="cpu",
                                       compute_type="int8")
@@ -144,6 +169,7 @@ def _whisper_transcribe(video: Path) -> Transcript:
     if cached is not None:
         return Transcript.from_dict(cached)
 
+    _patch_pyav()
     segments, info = _whisper_model.transcribe(str(wav), word_timestamps=True,
                                                vad_filter=True)
     words: list[Word] = []
