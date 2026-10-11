@@ -109,6 +109,8 @@ def tick() -> int:
 
 def _next_clip(store, account):
     for job in store.list_jobs(limit=100):
+        if job.archived:
+            continue
         if job.status not in (JobStatus.READY, JobStatus.PUBLISHED, JobStatus.PUBLISHING):
             continue
         clips = sorted(job.clips, key=lambda c: c.score, reverse=True)

@@ -157,6 +157,15 @@ def create_app() -> FastAPI:
             _rmtree_safe(get_settings().jobs_dir / job_id)
         return {"deleted": store.delete_job(job_id)}
 
+    @app.post("/api/jobs/{job_id}/archive")
+    def archive_job(job_id: str) -> dict:
+        job = store.get_job(job_id)
+        if not job:
+            raise HTTPException(404, "job not found")
+        job.archived = not job.archived
+        store.save_job(job)
+        return {"archived": job.archived}
+
     # ---- clips / media ----------------------------------------------------
     @app.get("/media/{name}")
     def media(name: str) -> FileResponse:

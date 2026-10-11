@@ -152,6 +152,7 @@ class Job:
     media_path: str = ""
     transcript_source: str = ""
     duration: float = 0.0
+    archived: bool = False
     clips: list[Clip] = field(default_factory=list)
     options: dict[str, Any] = field(default_factory=dict)
     error: str = ""
@@ -177,6 +178,7 @@ class Job:
             media_path=d.get("media_path", ""),
             transcript_source=d.get("transcript_source", ""),
             duration=float(d.get("duration", 0.0)),
+            archived=bool(d.get("archived", False)),
             clips=[Clip.from_dict(c) for c in d.get("clips", [])],
             options=dict(d.get("options") or {}),
             error=d.get("error", ""),
