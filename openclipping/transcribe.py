@@ -40,7 +40,9 @@ def transcribe(video: Path, duration: float, *, prefer: str | None = None) -> Tr
     avail = _whisper_available()
 
     if prefer in (None, "", "auto"):
-        prefer = "whisper" if (s.prefer_local_whisper and avail) else "gemini"
+        # Default split the users asked for: local Whisper for the transcript
+        # (free, unlimited), Gemini for highlight/virality analysis.
+        prefer = "whisper" if avail else "gemini"
 
     if prefer == "whisper":
         if avail:
