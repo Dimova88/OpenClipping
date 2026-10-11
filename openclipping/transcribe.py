@@ -37,20 +37,23 @@ def _extract_mp3(src: Path, dst: Path, bitrate: str = "32k") -> Path:
 
 def transcribe(video: Path, duration: float, *, prefer: str | None = None) -> Transcript:
     s = get_settings()
-    prefer = prefer or ("whisper" if s.prefer_local_whisper and _whisper_available()
-                        else "gemini")
-    if prefer == "whisper" and _whisper_available():
-        return _whisper_transcribe(video)
+    avail = _whisper_available()
 
-    if prefer == "gemini" and GeminiClient().configured:
+    if prefer in (None, "", "auto"):
+        prefer = "whisper" if (s.prefer_local_whisper and avail) else "gemini"
+
+    if prefer == "whisper":
+        if avail:
+            return _whisper_transcribe(video)
+        log.warning("whisper requested but not installed — falling back to Gemini/offline")
+
+    if GeminiClient().configured:
         try:
             return _gemini_transcribe(video, duration)
         except GeminiError as exc:
             log.warning("Gemini transcription unavailable (%s); falling back", exc)
-            if _whisper_available():
-                return _whisper_transcribe(video)
 
-    if _whisper_available():
+    if avail:
         return _whisper_transcribe(video)
 
     log.info("no AI transcription available — using offline energy segmentation")

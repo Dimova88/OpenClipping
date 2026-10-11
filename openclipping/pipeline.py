@@ -63,7 +63,8 @@ def process_job(job_id: str) -> Job:
 
         # ---- transcribe ---------------------------------------------------
         _set(job, JobStatus.TRANSCRIBING, 0.4, "transcribing audio…")
-        transcript = transcribe(media, info.duration)
+        transcript = transcribe(media, info.duration,
+                                prefer=job.options.get("transcribe") or None)
         job.transcript_source = transcript.source
         store.cache_set(f"transcript_{job.id}", transcript.to_dict())
 

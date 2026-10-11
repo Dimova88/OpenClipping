@@ -250,7 +250,7 @@ def _enqueue(job_id: str) -> None:
 
 
 def _safe_options(opts: dict) -> dict:
-    allowed = {"reframe", "caption_style", "cookies", "num_clips", "privacy"}
+    allowed = {"reframe", "caption_style", "cookies", "num_clips", "privacy", "transcribe"}
     return {k: v for k, v in (opts or {}).items() if k in allowed}
 
 
