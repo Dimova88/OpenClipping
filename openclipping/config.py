@@ -35,6 +35,15 @@ def _env_float(name: str, default: float) -> float:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+# Load a `.env` file from the repo root (if present) so the no-Docker route can
+# pick up GEMINI_API_KEY and friends without exporting shell variables.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(REPO_ROOT / ".env", override=False)
+except Exception:  # pragma: no cover - dotenv is optional
+    pass
+
 
 @dataclass
 class Settings:
