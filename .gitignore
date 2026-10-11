@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+*.mp4
+*.wav
+*.log
+.env
+Unselected files/

@@ -1,0 +1,23 @@
+services:
+  openclipping:
+    build: .
+    container_name: openclipping
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # AI (optional — leave blank to run fully offline)
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      PREFER_LOCAL_WHISPER: "${PREFER_LOCAL_WHISPER:-false}"
+      # Publishing (optional, all free to create)
+      IG_CLIENT_ID: "${IG_CLIENT_ID:-}"
+      IG_CLIENT_SECRET: "${IG_CLIENT_SECRET:-}"
+      TIKTOK_CLIENT_ID: "${TIKTOK_CLIENT_ID:-}"
+      TIKTOK_CLIENT_SECRET: "${TIKTOK_CLIENT_SECRET:-}"
+      YT_CLIENT_SECRET: "${YT_CLIENT_SECRET:-}"
+      OAUTH_REDIRECT_URI: "${OAUTH_REDIRECT_URI:-http://localhost:8000/oauth/callback}"
+      # Optional: public URL used for Instagram video_url fallback & TikTok pull
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-}"
+      SCHEDULER_ENABLED: "${SCHEDULER_ENABLED:-true}"
+    volumes:
+      - ./data:/data

@@ -1,0 +1,8 @@
+# Optional: fully-local, zero-API transcription (truly unlimited).
+# Install with:  .\.venv\Scripts\python -m pip install -r requirements-whisper.txt
+# On first run it downloads a Whisper model once from Hugging Face (~75MB-1.5GB
+# depending on WHISPER_MODEL). After that, transcription costs nothing.
+faster-whisper>=1.0.0
+# PyAV 19 removed the `metadata_errors` kwarg that faster-whisper 1.2.1 passes
+# to av.open(); keep PyAV below 19 so audio decoding works.
+av>=12,<19
