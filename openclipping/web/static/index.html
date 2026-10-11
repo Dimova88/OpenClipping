@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenClipping — free & unlimited AI clipping</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <style>
   :root{--bg:#0b0d12;--card:#141824;--line:#242b3d;--txt:#e8ecf6;--mut:#93a0b8;--acc:#22d3ee;--acc2:#a78bfa;--bad:#f87171;--ok:#34d399}
   *{box-sizing:border-box;margin:0}
@@ -123,7 +124,9 @@ const ACTIVE = new Set(['queued','downloading','transcribing','analyzing','rende
 async function refresh(){
   try{
     const [stats, jobs, accounts] = await Promise.all([api('/api/stats'), api('/api/jobs'), api('/api/accounts')]);
-    st_jobs.textContent=stats.jobs; st_clips.textContent=stats.clips; st_pub.textContent=stats.published;
+    document.getElementById('st-jobs').textContent=stats.jobs;
+    document.getElementById('st-clips').textContent=stats.clips;
+    document.getElementById('st-pub').textContent=stats.published;
 
     const acc = accounts.accounts;
     const accEl = document.getElementById('accounts');
