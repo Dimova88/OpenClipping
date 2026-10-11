@@ -58,22 +58,35 @@ class GeminiClient:
             log.warning("model discovery failed (%s) — using configured defaults", exc)
             return set()
 
-    def pick_model(self) -> str:
+    def _score(self, name: str):
+        """Rank free text models: newest version, flash/pro over lite."""
+        if any(b in name for b in ("image", "tts", "live", "audio", "embedding",
+                                   "vision", "realtime", "robotics")):
+            return None
+        m = re.search(r"gemini-(\d+(?:\.\d+)*)", name)
+        if not m:
+            return None
+        ver = tuple(int(x) for x in m.group(1).split("."))
+        family = 2 if "pro" in name else (1 if "flash" in name else 0)
+        lite = -1 if "lite" in name else 0
+        return (ver, family, lite)
+
+    def ordered_candidates(self) -> list[str]:
+        """Best-available-first list of model ids, live-discovered + defaults."""
         s = get_settings()
+        avail = self.available_models()
+        scored = sorted((n for n in avail if self._score(n)), key=self._score, reverse=True)
+        cands = list(scored)
+        for d in s.gemini_models:
+            if d not in cands:
+                cands.append(d)
+        return cands or list(s.gemini_models)
+
+    def pick_model(self) -> str:
         if self._model:
             return self._model
-        available = self.available_models()
-        if available:
-            for pref in s.gemini_models:
-                if pref in available:
-                    self._model = pref
-                    return pref
-            # any flash-ish model
-            for name in sorted(available):
-                if "flash" in name and "-image" not in name:
-                    self._model = name
-                    return name
-        self._model = s.gemini_models[0]
+        cands = self.ordered_candidates()
+        self._model = cands[0] if cands else get_settings().gemini_models[0]
         return self._model
 
     # --- low level ---------------------------------------------------------
@@ -91,7 +104,6 @@ class GeminiClient:
         if not self.configured:
             raise GeminiError("GEMINI_API_KEY not set")
         s = get_settings()
-        model = model or self.pick_model()
 
         content_parts: list[dict] = [{"text": prompt}]
         if parts:
@@ -107,29 +119,38 @@ class GeminiClient:
         if max_tokens:
             body["generationConfig"]["maxOutputTokens"] = max_tokens
 
+        models_to_try = [model] if model else self.ordered_candidates()
         last_exc: Exception | None = None
-        for attempt in range(s.gemini_max_retries):
-            self._pace()
-            try:
-                r = requests.post(
-                    f"{self.base}/models/{model}:generateContent",
-                    headers=self._headers(), json=body, timeout=s.gemini_timeout,
-                )
-                if r.status_code in (429, 503):
-                    retry = float(r.headers.get("Retry-After", 0) or 0)
-                    delay = max(retry, (2 ** attempt) + random.uniform(0, 2))
-                    log.warning("Gemini %s throttled; sleeping %.0fs", r.status_code, delay)
-                    time.sleep(delay)
-                    continue
-                r.raise_for_status()
-                data = r.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                return _parse(text, expect_json)
-            except (requests.RequestException, KeyError, ValueError) as exc:
-                last_exc = exc
-                log.warning("Gemini call failed (attempt %d): %s", attempt + 1, exc)
-                time.sleep(2 ** attempt + random.uniform(0, 1))
-        raise GeminiError(f"Gemini call failed after {s.gemini_max_retries} attempts: {last_exc}")
+        for m in models_to_try:
+            for attempt in range(s.gemini_max_retries):
+                self._pace()
+                try:
+                    r = requests.post(
+                        f"{self.base}/models/{m}:generateContent",
+                        headers=self._headers(), json=body, timeout=s.gemini_timeout,
+                    )
+                    if r.status_code == 404:
+                        log.warning("model %s not found (404) — trying next candidate", m)
+                        break  # this model is retired; move to the next candidate
+                    if r.status_code in (429, 503):
+                        retry = float(r.headers.get("Retry-After", 0) or 0)
+                        delay = max(retry, (2 ** attempt) + random.uniform(0, 2))
+                        log.warning("Gemini %s throttled; sleeping %.0fs", r.status_code, delay)
+                        time.sleep(delay)
+                        continue
+                    r.raise_for_status()
+                    data = r.json()
+                    text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    self._model = m          # remember the one that works
+                    return _parse(text, expect_json)
+                except (requests.RequestException, KeyError, ValueError) as exc:
+                    last_exc = exc
+                    log.warning("Gemini call failed (%s attempt %d): %s", m, attempt + 1, exc)
+                    time.sleep(2 ** attempt + random.uniform(0, 1))
+            else:
+                continue  # exhausted retries on this model — try the next one
+            continue      # 404 break — try the next one
+        raise GeminiError(f"Gemini call failed across {len(models_to_try)} models: {last_exc}")
 
     def audio_part(self, audio_bytes: bytes, mime: str = "audio/mp3") -> dict:
         return {"inline_data": {"mime_type": mime, "data": base64.b64encode(audio_bytes).decode()}}

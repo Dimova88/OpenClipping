@@ -57,10 +57,14 @@ class Settings:
     # Preferred models, best first. The client auto-discovers what the key can
     # actually reach, so model churn upstream cannot break an install.
     gemini_models: tuple[str, ...] = (
+        "gemini-3.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
     )
     gemini_timeout: int = field(default_factory=lambda: _env_int("GEMINI_TIMEOUT", 300))
     # Free tier can be as tight as ~20 requests/day on some projects, so pace
