@@ -6,164 +6,262 @@
 <title>OpenClipping — free & unlimited AI clipping</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <style>
-  :root{--bg:#0b0d12;--card:#141824;--line:#242b3d;--txt:#e8ecf6;--mut:#93a0b8;--acc:#22d3ee;--acc2:#a78bfa;--bad:#f87171;--ok:#34d399}
-  *{box-sizing:border-box;margin:0}
-  body{background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  header{display:flex;justify-content:space-between;align-items:center;padding:18px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b0d12ee;backdrop-filter:blur(8px)}
-  h1{font-size:20px} h1 span{color:var(--acc)}
-  .stats{display:flex;gap:20px;color:var(--mut);font-size:13px}
-  .stats b{color:var(--txt)}
-  main{max-width:1200px;margin:0 auto;padding:24px}
-  .grid{display:grid;gap:20px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
-  .card h2{font-size:15px;margin-bottom:12px;color:var(--acc2)}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  input,select,button{border-radius:10px;border:1px solid var(--line);background:#0d1119;color:var(--txt);padding:11px 13px;font-size:14px}
-  input[type=text]{flex:1;min-width:260px}
-  button{cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#06121a;font-weight:600}
-  button.ghost{background:transparent;color:var(--txt);border:1px solid var(--line);font-weight:500}
-  button.small{padding:7px 12px;font-size:12px}
+  :root{
+    --bg:#07090f; --bg2:#0b0f18; --card:#101623; --card2:#0d1220; --line:#1d2637;
+    --txt:#eef2fa; --mut:#8b98b0; --acc:#38e1ff; --acc2:#8b5cf6; --ok:#2fe6a0; --bad:#ff5d73; --warn:#ffc857;
+    --ig:#e1306c; --tt:#25f4ee; --yt:#ff0033;
+    --r:18px; --shadow:0 12px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(139,92,246,.16), transparent 60%),
+                radial-gradient(900px 500px at 10% 0%, rgba(56,225,255,.12), transparent 55%),
+                var(--bg); color:var(--txt);
+       font:15px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased}
+  ::selection{background:rgba(56,225,255,.3)}
+  header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;justify-content:space-between;
+         padding:14px 28px;border-bottom:1px solid var(--line);
+         background:rgba(7,9,15,.75);backdrop-filter:blur(14px)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+        background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 6px 20px rgba(56,225,255,.35)}
+  .brand h1{font-size:18px;font-weight:800;letter-spacing:.2px}
+  .brand small{display:block;color:var(--mut);font-weight:500;font-size:11.5px;letter-spacing:.4px}
+  .stats{display:flex;gap:10px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 14px;text-align:center;min-width:72px}
+  .stat b{font-size:17px;display:block}
+  .stat span{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+  main{max-width:1240px;margin:0 auto;padding:28px 20px 60px;display:grid;gap:22px}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);
+        border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--acc);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card h2 .n{width:22px;height:22px;border-radius:8px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+        color:#041018;display:grid;place-items:center;font-size:12px;font-weight:800}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=text],select{background:#0a0f1a;border:1px solid var(--line);color:var(--txt);border-radius:12px;
+        padding:12px 14px;font-size:14px;outline:none;transition:border .2s}
+  input[type=text]{flex:1;min-width:240px}
+  input[type=text]:focus,select:focus{border-color:var(--acc)}
+  select{cursor:pointer}
+  button{cursor:pointer;border:none;border-radius:12px;font-weight:700;font-size:14px;padding:12px 18px;
+        color:#041018;background:linear-gradient(135deg,var(--acc),var(--acc2));transition:transform .12s,filter .2s}
+  button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+  button:disabled{opacity:.5;cursor:wait;transform:none}
+  button.ghost{background:transparent;color:var(--txt);border:1px solid var(--line);font-weight:600}
+  button.small{padding:7px 12px;font-size:12px;border-radius:9px}
   .mut{color:var(--mut);font-size:12.5px}
-  .accounts{display:flex;gap:10px;flex-wrap:wrap}
-  .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#0d1119;font-size:13px}
-  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-  .job{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:#10141f}
-  .job .top{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
-  .status{font-size:12px;padding:3px 10px;border-radius:999px;background:#1b2334;color:var(--acc)}
-  .status.failed{color:var(--bad)} .status.ready,.status.published{color:var(--ok)}
-  .bar{height:6px;border-radius:99px;background:#1b2334;overflow:hidden}
-  .bar>div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
-  .clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:14px}
-  .clip{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1119;display:flex;flex-direction:column}
-  .clip video{width:100%;aspect-ratio:9/16;background:#000;object-fit:cover}
-  .clip .body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
-  .score{font-size:12px;color:var(--ok);font-weight:700}
-  .tags{color:var(--acc);font-size:11.5px;word-break:break-word}
-  .clip .actions{display:flex;gap:6px;flex-wrap:wrap}
-  .empty{color:var(--mut);text-align:center;padding:30px}
+  .file{display:flex;align-items:center;gap:10px}
+  input[type=file]{color:var(--mut);font-size:13px}
+  .chips{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);
+        background:#0a0f1a;font-size:13px;font-weight:600}
+  .chip .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .connect{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .pbtn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);
+        background:#0a0f1a;color:var(--txt);font-weight:700;font-size:13px;cursor:pointer;transition:border .2s,transform .12s}
+  .pbtn:hover{transform:translateY(-1px)}
+  .pbtn .ic{width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:10px;color:#fff;font-weight:800}
+  .pbtn.ig .ic{background:radial-gradient(circle at 30% 110%,#fdc468 0%,#df4996 45%,#8a3ab9 90%)}
+  .pbtn.tt .ic{background:#000;box-shadow:2px 2px 0 var(--tt),-2px -2px 0 #fe2c55}
+  .pbtn.yt .ic{background:var(--yt)}
+  .job{border:1px solid var(--line);border-radius:16px;background:#0c1120;margin-bottom:16px;overflow:hidden}
+  .job .top{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px}
+  .job .title{font-weight:700}
+  .pill{font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.5px;text-transform:uppercase;
+        background:#172033;color:var(--acc)}
+  .pill.failed{color:var(--bad)} .pill.ready,.pill.published{color:var(--ok)} .pill.rendering{color:var(--warn)}
+  .bar{height:6px;background:#141c2d}
+  .bar>div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0;transition:width .5s;position:relative;overflow:hidden}
+  .bar>div::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+        animation:shine 1.4s infinite;transform:translateX(-100%)}
+  @keyframes shine{to{transform:translateX(100%)}}
+  .job .msg{padding:8px 16px 12px;color:var(--mut);font-size:12.5px}
+  .job .msg.err{color:var(--bad)}
+  .clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:0 16px 16px}
+  .clip{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0a0f1a;display:flex;flex-direction:column;transition:transform .15s,border .2s}
+  .clip:hover{transform:translateY(-3px);border-color:var(--acc)}
+  .thumb{position:relative;aspect-ratio:9/16;background:#000}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .score{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);color:var(--ok);
+        font-weight:800;font-size:12px;padding:4px 9px;border-radius:999px}
+  .thumb .play{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .2s;background:rgba(0,0,0,.35)}
+  .clip:hover .play{opacity:1}
+  .play span{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;font-size:18px;color:#000}
+  .clip .body{padding:12px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .clip .t{font-weight:700;font-size:13.5px}
+  .clip .c{color:var(--mut);font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .clip .tags{color:var(--acc);font-size:11px;word-break:break-word}
+  .clip .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+  .pub{font-size:11px;font-weight:800;padding:6px 10px;border-radius:8px;color:#fff;cursor:pointer;border:none}
+  .pub.ig{background:var(--ig)} .pub.tt{background:#000;box-shadow:1px 1px 0 var(--tt)} .pub.yt{background:var(--yt)}
+  .empty{text-align:center;color:var(--mut);padding:36px 10px}
+  .empty .big{font-size:40px}
+  details.diag{margin-top:0}
+  details.diag summary{cursor:pointer;font-weight:700;color:var(--mut)}
+  .diag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:12px}
+  .drow{border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px;display:flex;gap:8px;align-items:center;background:#0a0f1a}
+  .drow .s{width:9px;height:9px;border-radius:50%;flex:none}
+  .s.ok{background:var(--ok)} .s.bad{background:var(--bad)} .s.warn{background:var(--warn)}
+  .drow code{color:var(--acc);word-break:break-all}
   a{color:var(--acc)}
-  .flex{display:flex;justify-content:space-between;align-items:center}
+  @media (max-width:640px){ header{padding:12px 14px} .stats{display:none} }
 </style>
 </head>
 <body>
 <header>
-  <h1>Open<span>Clipping</span> ⚡ free · unlimited · self-hosted</h1>
+  <div class="brand">
+    <div class="logo">⚡</div>
+    <div><h1>OpenClipping</h1><small>FREE · UNLIMITED · SELF-HOSTED</small></div>
+  </div>
   <div class="stats">
-    <span><b id="st-jobs">0</b> jobs</span>
-    <span><b id="st-clips">0</b> clips</span>
-    <span><b id="st-pub">0</b> published</span>
+    <div class="stat"><b id="st-jobs">0</b><span>Jobs</span></div>
+    <div class="stat"><b id="st-clips">0</b><span>Clips</span></div>
+    <div class="stat"><b id="st-pub">0</b><span>Posted</span></div>
   </div>
 </header>
-<main class="grid">
+
+<main>
   <section class="card">
-    <h2>1 · Feed it a video</h2>
+    <h2><span class="n">1</span> Feed it a video</h2>
     <div class="row">
-      <input id="src" type="text" placeholder="Paste a YouTube / TikTok / Whop / direct MP4 URL…">
-      <select id="reframe">
-        <option value="auto">Auto reframe (face-track)</option>
+      <input id="src" type="text" placeholder="Paste a YouTube / TikTok / Whop / MP4 URL…">
+      <select id="reframe" title="Reframe mode">
+        <option value="auto">Auto face-track</option>
         <option value="track">Face-track</option>
-        <option value="blur_pad">Blur-pad (keep full frame)</option>
+        <option value="blur_pad">Blur-pad</option>
         <option value="center">Center crop</option>
       </select>
-      <select id="capstyle">
-        <option value="bold_pop">Captions: bold pop</option>
-        <option value="clean">Captions: clean</option>
-        <option value="neon">Captions: neon</option>
-        <option value="minimal">Captions: minimal</option>
+      <select id="capstyle" title="Caption style">
+        <option value="bold_pop">Bold pop</option>
+        <option value="clean">Clean</option>
+        <option value="neon">Neon</option>
+        <option value="minimal">Minimal</option>
       </select>
-      <button onclick="submitUrl()">Clip it</button>
+      <button onclick="submitUrl()">Clip it ⚡</button>
     </div>
-    <div class="row" style="margin-top:12px">
-      <input id="file" type="file" accept="video/*">
+    <div class="row" style="margin-top:14px">
+      <div class="file"><input id="file" type="file" accept="video/*"></div>
       <button class="ghost" onclick="submitFile()">Upload & clip</button>
-      <span class="mut">Tip: add your Gemini key in <code>.env</code> for real captions; without it the app still runs offline.</span>
+      <span class="mut">Add a free Gemini key in <code>.env</code> for real captions — without it the app still runs offline.</span>
     </div>
   </section>
 
   <section class="card">
-    <div class="flex"><h2>2 · Connect publishing accounts</h2></div>
-    <div class="accounts" id="accounts"></div>
-    <div class="row" style="margin-top:12px">
-      <button class="ghost small" onclick="connect('instagram')">+ Instagram (Reels)</button>
-      <button class="ghost small" onclick="connect('tiktok')">+ TikTok</button>
-      <button class="ghost small" onclick="connect('youtube')">+ YouTube (Shorts)</button>
+    <h2><span class="n">2</span> Connect publishing accounts</h2>
+    <div class="chips" id="accounts"></div>
+    <div class="connect">
+      <button class="pbtn ig" onclick="connect('instagram')"><span class="ic">IG</span> Instagram Reels</button>
+      <button class="pbtn tt" onclick="connect('tiktok')"><span class="ic">TT</span> TikTok</button>
+      <button class="pbtn yt" onclick="connect('youtube')"><span class="ic">▶</span> YouTube Shorts</button>
     </div>
   </section>
 
   <section class="card">
-    <h2>3 · Jobs & viral clips</h2>
-    <div id="jobs"><div class="empty">No jobs yet — paste a URL above to start.</div></div>
+    <h2><span class="n">3</span> Jobs & viral clips</h2>
+    <div id="jobs"><div class="empty"><div class="big">🎬</div>Paste a URL above to create your first clips.</div></div>
+  </section>
+
+  <section class="card">
+    <details class="diag">
+      <summary>🩺 Diagnostics <span class="mut">(click to expand — useful if something fails)</span></summary>
+      <div class="diag-grid" id="diag"></div>
+      <div class="row" style="margin-top:12px"><button class="ghost small" onclick="copyDiag()">Copy diagnostics</button></div>
+    </details>
   </section>
 </main>
 
 <script>
-async function api(p, opts){ const r = await fetch(p, opts); if(!r.ok){ const t=await r.text(); throw new Error(t); } return r.json(); }
+const $ = id => document.getElementById(id);
+async function api(p, opts){ const r = await fetch(p, opts); if(!r.ok){ const t=await r.text(); throw new Error(t||r.status); } return r.json(); }
+function esc(s){ return (s||'').replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+const ACTIVE = new Set(['queued','downloading','transcribing','analyzing','rendering','publishing']);
+
 async function submitUrl(){
-  const src = document.getElementById('src').value.trim(); if(!src) return alert('paste a URL');
-  const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
-  const fd = new FormData(); fd.append('source', src); fd.append('options', options);
+  const src = $('src').value.trim(); if(!src) return alert('Paste a URL first');
+  const fd = new FormData(); fd.append('source', src);
+  fd.append('options', JSON.stringify({reframe:$('reframe').value, caption_style:$('capstyle').value}));
   try{ await api('/api/jobs', {method:'POST', body:fd}); refresh(); }
-  catch(e){ alert('Could not start job: '+e.message); }
+  catch(e){ alert('Could not start: '+e.message); }
 }
 async function submitFile(){
-  const f = document.getElementById('file').files[0]; if(!f) return alert('choose a file');
-  const options = JSON.stringify({reframe:reframe.value, caption_style:capstyle.value});
-  const fd = new FormData(); fd.append('file', f); fd.append('options', options);
+  const f = $('file').files[0]; if(!f) return alert('Choose a video file first');
+  const fd = new FormData(); fd.append('file', f);
+  fd.append('options', JSON.stringify({reframe:$('reframe').value, caption_style:$('capstyle').value}));
   try{ await api('/api/jobs/upload', {method:'POST', body:fd}); refresh(); }
-  catch(e){ alert('Could not start job: '+e.message); }
+  catch(e){ alert('Could not start: '+e.message); }
 }
-async function connect(p){ const d = await api('/api/accounts/connect/'+p); location.href = d.url; }
+async function connect(p){ try{ const d=await api('/api/accounts/connect/'+p); location.href=d.url; }catch(e){ alert(e.message); } }
 async function publish(clipId, accountId, btn){
-  btn.disabled = true; btn.textContent='…';
-  try{ const fd=new FormData(); fd.append('account_id', accountId);
-       await api('/api/clips/'+clipId+'/publish', {method:'POST', body:fd}); refresh(); }
-  catch(e){ alert(e.message); }
-  btn.disabled=false; btn.textContent='post';
+  btn.disabled=true; const old=btn.textContent; btn.textContent='…';
+  try{ const fd=new FormData(); fd.append('account_id',accountId); await api('/api/clips/'+clipId+'/publish',{method:'POST',body:fd}); refresh(); }
+  catch(e){ alert(e.message); btn.disabled=false; btn.textContent=old; }
 }
-const ACTIVE = new Set(['queued','downloading','transcribing','analyzing','rendering','publishing']);
+function base(p){ return (p||'').split('/').pop().split('\\').pop(); }
+
 async function refresh(){
   try{
     const [stats, jobs, accounts] = await Promise.all([api('/api/stats'), api('/api/jobs'), api('/api/accounts')]);
-    document.getElementById('st-jobs').textContent=stats.jobs;
-    document.getElementById('st-clips').textContent=stats.clips;
-    document.getElementById('st-pub').textContent=stats.published;
+    $('st-jobs').textContent=stats.jobs; $('st-clips').textContent=stats.clips; $('st-pub').textContent=stats.published;
 
-    const acc = accounts.accounts;
-    const accEl = document.getElementById('accounts');
-    accEl.innerHTML = acc.length ? acc.map(a=>`<span class="chip"><span class="dot"></span>${a.platform} · ${a.handle||'connected'}</span>`).join('')
-      : '<span class="mut">No accounts connected. Connect at least one to auto-publish.</span>';
+    $('accounts').innerHTML = accounts.accounts.length
+      ? accounts.accounts.map(a=>`<span class="chip"><span class="dot"></span>${a.platform} · ${esc(a.handle||'connected')}</span>`).join('')
+      : '<span class="mut">No accounts yet — connect below to auto-publish.</span>';
 
-    const jobsEl = document.getElementById('jobs');
-    if(!jobs.jobs.length){ jobsEl.innerHTML = '<div class="empty">No jobs yet — paste a URL above to start.</div>'; return; }
-    jobsEl.innerHTML = jobs.jobs.slice(0,30).map(j=>jobHtml(j, acc)).join('');
+    const el = $('jobs');
+    if(!jobs.jobs.length){ el.innerHTML='<div class="empty"><div class="big">🎬</div>Paste a URL above to create your first clips.</div>'; return; }
+    el.innerHTML = jobs.jobs.slice(0,30).map(j=>jobHtml(j, accounts.accounts)).join('');
     if(jobs.jobs.some(j=>ACTIVE.has(j.status))) setTimeout(refresh, 2500);
   }catch(e){ console.error(e); }
 }
-function esc(s){ return (s||'').replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
 function jobHtml(j, accounts){
   const pct = Math.round((j.progress||0)*100);
   const clips = (j.clips||[]).map(c=>`
     <div class="clip">
-      <video src="/media/${c.file.split('/').pop()}" controls preload="metadata"></video>
+      <div class="thumb">
+        <img src="/media/${base(c.thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">
+        <span class="score">🔥 ${Math.round(c.score)}</span>
+        <div class="play" onclick="this.parentElement.outerHTML='<video src=/media/${base(c.file)} controls autoplay style=&quot;width:100%;height:100%;object-fit:cover&quot;></video>'"><span>▶</span></div>
+      </div>
       <div class="body">
-        <div class="flex"><span class="score">🔥 ${Math.round(c.score)}</span><span class="mut">${Math.round(c.duration)}s</span></div>
-        <div><b>${esc(c.highlight?c.highlight.title:'Clip')}</b></div>
-        <div class="mut">${esc(c.highlight?c.highlight.caption:'')}</div>
-        <div class="tags">${(c.highlight&&c.highlight.hashtags||[]).map(t=>'#'+t).join(' ')}</div>
-        <div class="actions">${accounts.map(a=>`<button class="small" onclick="publish('${c.id}','${a.id}',this)">post→${a.platform}</button>`).join('')}
+        <div class="t">${esc(c.highlight?c.highlight.title:'Clip')}</div>
+        <div class="c">${esc(c.highlight?c.highlight.caption:'')}</div>
+        <div class="tags">${((c.highlight&&c.highlight.hashtags)||[]).map(t=>'#'+t).join(' ')}</div>
+        <div class="actions">
+          ${accounts.map(a=>`<button class="pub ${a.platform==='instagram'?'ig':a.platform==='tiktok'?'tt':'yt'}" onclick="publish('${c.id}','${a.id}',this)">${a.platform}</button>`).join('')}
           ${Object.keys(c.published_to||{}).length?`<span class="mut">sent: ${Object.keys(c.published_to).join(', ')}</span>`:''}
         </div>
       </div>
     </div>`).join('');
+  const isErr = j.status==='failed';
   return `<div class="job">
-    <div class="top"><span><b>${esc(j.title||j.source)}</b> <span class="mut">· ${j.transcript_source||''}</span></span>
-      <span class="status ${j.status}">${j.status}</span></div>
+    <div class="top"><span class="title">${esc(j.title||j.source)}</span><span class="pill ${j.status}">${j.status}</span></div>
     <div class="bar"><div style="width:${pct}%"></div></div>
-    <div class="mut" style="margin-top:6px">${esc(j.message||j.error||'')}</div>
+    <div class="msg ${isErr?'err':''}">${esc(j.error||j.message||'')}</div>
     <div class="clips">${clips}</div>
   </div>`;
 }
-refresh(); setInterval(()=>{ if(document.hasFocus()) refresh(); }, 8000);
+
+let DIAG = null;
+async function loadDiag(){
+  try{
+    DIAG = await api('/api/diagnostics');
+    const rows = [
+      ['ffmpeg', DIAG.ffmpeg && !String(DIAG.ffmpeg).startsWith('ERROR'), DIAG.ffmpeg],
+      ['libass captions', !!DIAG.ffmpeg_has_ass, DIAG.ffmpeg_has_ass?'available':'missing (clips still work, no captions)'],
+      ['face detector', !String(DIAG.face_detector).startsWith('ERROR'), DIAG.face_detector],
+      ['Gemini key', DIAG.gemini_configured, DIAG.gemini_configured?'configured':'not set (offline mode)'],
+      ['local Whisper', DIAG.whisper_available, DIAG.whisper_available?'available':'not installed'],
+      ['platform', true, DIAG.platform],
+    ];
+    $('diag').innerHTML = rows.map(([name,ok,val])=>
+      `<div class="drow"><span class="s ${ok?'ok':(name==='Gemini key'||name==='local Whisper'||name==='libass captions'?'warn':'bad')}"></span><b>${name}</b>&nbsp;<code>${esc(String(val))}</code></div>`).join('');
+  }catch(e){ $('diag').innerHTML = `<div class="drow"><span class="s bad"></span>diagnostics unavailable</div>`; }
+}
+function copyDiag(){ if(DIAG) navigator.clipboard.writeText(JSON.stringify(DIAG,null,2)).then(()=>alert('Diagnostics copied — paste them to me.')); }
+
+refresh(); loadDiag();
+setInterval(()=>{ if(document.hasFocus()) refresh(); }, 8000);
 </script>
 </body>
 </html>

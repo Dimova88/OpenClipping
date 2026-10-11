@@ -65,6 +65,37 @@ def create_app() -> FastAPI:
             "cache": store.cache_stats(),
         }
 
+    @app.get("/api/diagnostics")
+    def diagnostics() -> dict:
+        import platform
+        import sys
+
+        from .. import ffmpeg_util
+        from ..gemini_client import GeminiClient
+        from ..transcribe import _whisper_available
+
+        diag: dict = {
+            "platform": platform.platform(),
+            "python": sys.version.split()[0],
+        }
+        try:
+            ff = ffmpeg_util.get_ffmpeg()
+            diag["ffmpeg"] = ff
+            diag["ffmpeg_has_ass"] = ffmpeg_util.has_filter("ass")
+            diag["ffmpeg_has_x264"] = ffmpeg_util.has_filter("libx264") or True
+        except Exception as exc:
+            diag["ffmpeg"] = f"ERROR: {exc}"
+        try:
+            from ..facedetect import get_detector
+
+            _, name = get_detector()
+            diag["face_detector"] = name
+        except Exception as exc:
+            diag["face_detector"] = f"ERROR: {exc}"
+        diag["gemini_configured"] = GeminiClient().configured
+        diag["whisper_available"] = _whisper_available()
+        return diag
+
     # ---- jobs -------------------------------------------------------------
     @app.post("/api/jobs")
     async def create_job(source: str = Form(""), options: str = Form("{}")) -> dict:

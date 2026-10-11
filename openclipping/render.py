@@ -98,29 +98,37 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
         hook.write_text(_hook_ass(hook_text, s.hook_card_sec), encoding="utf-8", newline="\n")
         ass_files.append(hook)
 
-    for a in ass_files:
-        tail += f",ass=filename={_q(a)}"
+    def build_cmd(tail: str) -> str:
+        g = graph + f";[reframed]null{tail},fps={s.fps},format=yuv420p[outv]"
+        c = [
+            ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
+            "-ss", f"{start:.3f}", "-to", f"{end:.3f}", "-i", str(src),
+            "-filter_complex", g,
+            "-map", "[outv]", "-map", "0:a?",
+            "-c:v", "libx264", "-preset", s.preset, "-crf", str(s.crf),
+            "-profile:v", "high", "-level", "4.2", "-pix_fmt", "yuv420p",
+            "-g", str(s.fps * 2), "-keyint_min", str(s.fps),
+        ]
+        if normalize_audio:
+            c += ["-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
+                  "-c:a", "aac", "-b:a", s.audio_bitrate, "-ar", "44100", "-ac", "2"]
+        else:
+            c += ["-c:a", "aac", "-b:a", s.audio_bitrate, "-ar", "44100", "-ac", "2"]
+        c += ["-movflags", "+faststart", "-shortest", str(out_path)]
+        return c
 
-    graph += f";[reframed]null{tail},fps={s.fps},format=yuv420p[outv]"
-
-    cmd = [
-        ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
-        "-ss", f"{start:.3f}", "-to", f"{end:.3f}", "-i", str(src),
-        "-filter_complex", graph,
-        "-map", "[outv]", "-map", "0:a?",
-        "-c:v", "libx264", "-preset", s.preset, "-crf", str(s.crf),
-        "-profile:v", "high", "-level", "4.2", "-pix_fmt", "yuv420p",
-        "-g", str(s.fps * 2), "-keyint_min", str(s.fps),
-    ]
-    if normalize_audio:
-        cmd += ["-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
-                "-c:a", "aac", "-b:a", s.audio_bitrate, "-ar", "44100", "-ac", "2"]
-    else:
-        cmd += ["-c:a", "aac", "-b:a", s.audio_bitrate, "-ar", "44100", "-ac", "2"]
-
-    cmd += ["-movflags", "+faststart", "-shortest", str(out_path)]
-
-    ffmpeg_util.run(cmd, timeout=3600)
+    tail = "".join(f",ass=filename={_q(a)}" for a in ass_files)
+    try:
+        ffmpeg_util.run(build_cmd(tail), timeout=3600)
+    except RuntimeError:
+        if not ass_files:
+            raise
+        # Captions/fonts can break on exotic ffmpeg builds; never let that kill
+        # the clip. Retry once with a clean (uncaptioned) render.
+        log.warning("captioned render failed — retrying without captions")
+        for a in ass_files:
+            a.unlink(missing_ok=True)
+        ffmpeg_util.run(build_cmd(""), timeout=3600)
 
     info = ffmpeg_util.probe(out_path)
     thumb = make_thumbnail(out_path, out_path.with_suffix(".jpg"), duration)
