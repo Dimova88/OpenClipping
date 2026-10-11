@@ -166,7 +166,10 @@
     <details class="diag">
       <summary>🩺 Diagnostics <span class="mut">(click to expand — useful if something fails)</span></summary>
       <div class="diag-grid" id="diag"></div>
-      <div class="row" style="margin-top:12px"><button class="ghost small" onclick="copyDiag()">Copy diagnostics</button></div>
+      <div class="row" style="margin-top:12px">
+        <button class="ghost small" onclick="loadDiag(true)">▶ Test Gemini</button>
+        <button class="ghost small" onclick="copyDiag()">Copy diagnostics</button>
+      </div>
     </details>
   </section>
 </main>
@@ -230,33 +233,44 @@ function jobHtml(j, accounts){
         <div class="tags">${((c.highlight&&c.highlight.hashtags)||[]).map(t=>'#'+t).join(' ')}</div>
         <div class="actions">
           ${accounts.map(a=>`<button class="pub ${a.platform==='instagram'?'ig':a.platform==='tiktok'?'tt':'yt'}" onclick="publish('${c.id}','${a.id}',this)">${a.platform}</button>`).join('')}
+          <button class="pub" style="background:#2a3242;color:#c6d0e2" title="Delete clip" onclick="delClip('${c.id}',this)">✕</button>
           ${Object.keys(c.published_to||{}).length?`<span class="mut">sent: ${Object.keys(c.published_to).join(', ')}</span>`:''}
         </div>
       </div>
     </div>`).join('');
   const isErr = j.status==='failed';
   return `<div class="job">
-    <div class="top"><span class="title">${esc(j.title||j.source)}</span><span class="pill ${j.status}">${j.status}</span></div>
+    <div class="top"><span class="title">${esc(j.title||j.source)} <span class="mut">· ${esc(j.transcript_source||'no-ai')} · ${Math.round(j.duration||0)}s</span></span><span class="pill ${j.status}">${j.status}</span></div>
     <div class="bar"><div style="width:${pct}%"></div></div>
     <div class="msg ${isErr?'err':''}">${esc(j.error||j.message||'')}</div>
     <div class="clips">${clips}</div>
   </div>`;
 }
 
+async function delClip(id, btn){
+  if(!confirm('Delete this clip?')) return;
+  btn.disabled=true;
+  try{ await api('/api/clips/'+id, {method:'DELETE'}); refresh(); }
+  catch(e){ alert(e.message); btn.disabled=false; }
+}
+
 let DIAG = null;
-async function loadDiag(){
+async function loadDiag(ping){
   try{
-    DIAG = await api('/api/diagnostics');
+    DIAG = await api('/api/diagnostics'+(ping?'?ping=1':''));
+    const gemVal = DIAG.gemini_ok===true ? ('WORKS ✔ ('+(DIAG.gemini_model||'')+')')
+                 : DIAG.gemini_ok===false ? ('FAILED: '+(DIAG.gemini_error||''))
+                 : (DIAG.gemini_configured?'configured — press “Test Gemini”':'not set (offline mode)');
     const rows = [
-      ['ffmpeg', DIAG.ffmpeg && !String(DIAG.ffmpeg).startsWith('ERROR'), DIAG.ffmpeg],
+      ['ffmpeg', DIAG.ffmpeg && !String(DIAG.ffmpeg).startsWith('ERROR'), String(DIAG.ffmpeg).split('\\').pop()],
       ['libass captions', !!DIAG.ffmpeg_has_ass, DIAG.ffmpeg_has_ass?'available':'missing (clips still work, no captions)'],
       ['face detector', !String(DIAG.face_detector).startsWith('ERROR'), DIAG.face_detector],
-      ['Gemini key', DIAG.gemini_configured, DIAG.gemini_configured?'configured':'not set (offline mode)'],
+      ['Gemini', DIAG.gemini_ok===true ? true : DIAG.gemini_configured, gemVal],
       ['local Whisper', DIAG.whisper_available, DIAG.whisper_available?'available':'not installed'],
       ['platform', true, DIAG.platform],
     ];
     $('diag').innerHTML = rows.map(([name,ok,val])=>
-      `<div class="drow"><span class="s ${ok?'ok':(name==='Gemini key'||name==='local Whisper'||name==='libass captions'?'warn':'bad')}"></span><b>${name}</b>&nbsp;<code>${esc(String(val))}</code></div>`).join('');
+      `<div class="drow"><span class="s ${ok?'ok':(name==='Gemini'||name==='local Whisper'||name==='libass captions'?'warn':'bad')}"></span><b>${name}</b>&nbsp;<code>${esc(String(val))}</code></div>`).join('');
   }catch(e){ $('diag').innerHTML = `<div class="drow"><span class="s bad"></span>diagnostics unavailable</div>`; }
 }
 function copyDiag(){ if(DIAG) navigator.clipboard.writeText(JSON.stringify(DIAG,null,2)).then(()=>alert('Diagnostics copied — paste them to me.')); }

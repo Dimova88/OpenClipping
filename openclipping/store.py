@@ -115,6 +115,15 @@ class Store:
         self.save_job(job)
         return clip
 
+    def delete_clip(self, clip_id: str) -> Clip | None:
+        found = self.find_clip(clip_id)
+        if not found:
+            return None
+        job, clip = found
+        job.clips = [c for c in job.clips if c.id != clip_id]
+        self.save_job(job)
+        return clip
+
     # --- accounts ----------------------------------------------------------
     def save_account(self, account: Account) -> None:
         with self._connect() as cx:

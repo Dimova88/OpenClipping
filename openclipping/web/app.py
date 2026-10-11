@@ -66,7 +66,7 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/api/diagnostics")
-    def diagnostics() -> dict:
+    def diagnostics(ping: bool = False) -> dict:
         import platform
         import sys
 
@@ -94,6 +94,17 @@ def create_app() -> FastAPI:
             diag["face_detector"] = f"ERROR: {exc}"
         diag["gemini_configured"] = GeminiClient().configured
         diag["whisper_available"] = _whisper_available()
+
+        if ping and diag["gemini_configured"]:
+            try:
+                reply = GeminiClient().generate(
+                    "Reply with exactly one word: pong", expect_json=False, max_tokens=8)
+                diag["gemini_ok"] = True
+                diag["gemini_reply"] = str(reply).strip()[:40]
+                diag["gemini_model"] = GeminiClient()._model
+            except Exception as exc:
+                diag["gemini_ok"] = False
+                diag["gemini_error"] = str(exc)[:200]
         return diag
 
     # ---- jobs -------------------------------------------------------------
@@ -158,6 +169,16 @@ def create_app() -> FastAPI:
                     "image/jpeg" if safe.endswith((".jpg", ".jpeg")) else None)
                 return FileResponse(p, media_type=media_type)
         raise HTTPException(404, "media not found")
+
+    @app.delete("/api/clips/{clip_id}")
+    def delete_clip(clip_id: str) -> dict:
+        clip = store.delete_clip(clip_id)
+        if not clip:
+            raise HTTPException(404, "clip not found")
+        for p in (clip.file, clip.thumb):
+            if p:
+                Path(p).unlink(missing_ok=True)
+        return {"deleted": True}
 
     @app.post("/api/clips/{clip_id}/publish")
     def publish_clip(clip_id: str, account_id: str = Form(...),
