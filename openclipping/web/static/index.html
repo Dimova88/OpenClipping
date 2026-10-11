@@ -17,7 +17,8 @@
   body{background:radial-gradient(1200px 600px at 80% -10%, rgba(139,92,246,.16), transparent 60%),
                 radial-gradient(900px 500px at 10% 0%, rgba(56,225,255,.12), transparent 55%),
                 var(--bg); color:var(--txt);
-       font:15px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased}
+       font:15px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased;
+       overflow-x:hidden; max-width:100vw}
   ::selection{background:rgba(56,225,255,.3)}
   header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;justify-content:space-between;
          padding:14px 28px;border-bottom:1px solid var(--line);
@@ -64,7 +65,7 @@
   .pbtn.ig .ic{background:radial-gradient(circle at 30% 110%,#fdc468 0%,#df4996 45%,#8a3ab9 90%)}
   .pbtn.tt .ic{background:#000;box-shadow:2px 2px 0 var(--tt),-2px -2px 0 #fe2c55}
   .pbtn.yt .ic{background:var(--yt)}
-  .job{border:1px solid var(--line);border-radius:16px;background:#0c1120;margin-bottom:16px;overflow:hidden}
+  .job{border:1px solid var(--line);border-radius:16px;background:#0c1120;margin-bottom:16px;overflow:hidden;max-width:100%}
   .job .top{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px}
   .job .title{font-weight:700}
   .pill{font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;letter-spacing:.5px;text-transform:uppercase;
@@ -75,7 +76,7 @@
   .bar>div::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
         animation:shine 1.4s infinite;transform:translateX(-100%)}
   @keyframes shine{to{transform:translateX(100%)}}
-  .job .msg{padding:8px 16px 12px;color:var(--mut);font-size:12.5px}
+  .job .msg{padding:8px 16px 12px;color:var(--mut);font-size:12.5px;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
   .job .msg.err{color:var(--bad)}
   .clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:0 16px 16px}
   .clip{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0a0f1a;display:flex;flex-direction:column;transition:transform .15s,border .2s}

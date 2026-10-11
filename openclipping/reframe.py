@@ -267,6 +267,14 @@ def build_plan(video: Path, start: float, end: float, src_w: int, src_h: int,
         x = (src_w - crop_w) / 2.0
         keyframes = [Keyframe(start, x, 0.0), Keyframe(end, x, 0.0)]
 
+    # Keep the compiled ffmpeg expression shallow: very deep if() chains are
+    # rejected by some builds (e.g. ffmpeg 9 on Windows). Decimate to <=48 pts.
+    if len(keyframes) > 48:
+        step = math.ceil(len(keyframes) / 48)
+        keyframes = keyframes[::step]
+        if keyframes[-1].t < end - 0.25:
+            keyframes.append(Keyframe(end, keyframes[-1].x, 0.0))
+
     return ReframePlan(
         mode="track", crop_w=crop_w, crop_h=crop_h, keyframes=keyframes,
         faces_found=faces_found, frames_sampled=len(times), src_w=src_w, src_h=src_h,

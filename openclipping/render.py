@@ -14,7 +14,7 @@ from . import ffmpeg_util
 from .captions import build_ass
 from .config import get_settings
 from .models import Word
-from .reframe import ReframePlan, keyframes_to_expr
+from .reframe import ReframePlan, Keyframe, keyframes_to_expr
 
 log = logging.getLogger(__name__)
 
@@ -74,13 +74,9 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
     out_path.parent.mkdir(parents=True, exist_ok=True)
     duration = max(0.5, end - start)
 
-    graph = build_video_filter(plan, start, s.out_width, s.out_height)
-
     # captions (+ optional hook line) are chained after reframing.
-    # Some ffmpeg builds (e.g. minimal Windows static builds) ship without
-    # libass; degrade gracefully to no captions instead of crashing.
+    # Some ffmpeg builds ship without libass; degrade to no captions then.
     can_caption = ffmpeg_util.has_filter("ass")
-    tail = ""
     ass_files: list[Path] = []
     if not can_caption:
         log.warning("ffmpeg build lacks the 'ass' filter — captions will be skipped")
@@ -97,8 +93,9 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
         hook = out_path.with_name(out_path.stem + "_hook.ass")
         hook.write_text(_hook_ass(hook_text, s.hook_card_sec), encoding="utf-8", newline="\n")
         ass_files.append(hook)
+    cap_tail = "".join(f",ass=filename={_q(a)}" for a in ass_files)
 
-    def build_cmd(tail: str) -> str:
+    def build_cmd(graph: str, tail: str) -> list[str]:
         g = graph + f";[reframed]null{tail},fps={s.fps},format=yuv420p[outv]"
         c = [
             ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
@@ -117,18 +114,33 @@ def render_clip(src: Path, start: float, end: float, out_path: Path,
         c += ["-movflags", "+faststart", "-shortest", str(out_path)]
         return c
 
-    tail = "".join(f",ass=filename={_q(a)}" for a in ass_files)
-    try:
-        ffmpeg_util.run(build_cmd(tail), timeout=3600)
-    except RuntimeError:
-        if not ass_files:
-            raise
-        # Captions/fonts can break on exotic ffmpeg builds; never let that kill
-        # the clip. Retry once with a clean (uncaptioned) render.
-        log.warning("captioned render failed — retrying without captions")
-        for a in ass_files:
-            a.unlink(missing_ok=True)
-        ffmpeg_util.run(build_cmd(""), timeout=3600)
+    def _center_plan() -> ReframePlan:
+        x = (plan.src_w - plan.crop_w) / 2
+        return ReframePlan(mode="center", crop_w=plan.crop_w, crop_h=plan.crop_h,
+                           keyframes=[Keyframe(start, x, 0), Keyframe(end, x, 0)],
+                           src_w=plan.src_w, src_h=plan.src_h)
+
+    # Fail-safe cascade: some ffmpeg builds (e.g. ffmpeg 9 on Windows) reject the
+    # long face-track crop expression. Degrade stepwise so a clip ALWAYS renders.
+    attempts: list[tuple[ReframePlan, str]] = [(plan, cap_tail), (plan, "")]
+    if plan.mode not in ("center", "native"):
+        cp = _center_plan()
+        attempts += [(cp, cap_tail), (cp, "")]
+
+    last_exc: Exception | None = None
+    for p2, tail in attempts:
+        try:
+            ffmpeg_util.run(build_cmd(build_video_filter(p2, start, s.out_width, s.out_height), tail),
+                            timeout=3600)
+            last_exc = None
+            break
+        except RuntimeError as exc:
+            last_exc = exc
+            log.warning("render attempt (%s%s) failed — trying simpler fallback",
+                        p2.mode, "+captions" if tail else "")
+
+    if last_exc is not None:
+        raise last_exc
 
     info = ffmpeg_util.probe(out_path)
     thumb = make_thumbnail(out_path, out_path.with_suffix(".jpg"), duration)

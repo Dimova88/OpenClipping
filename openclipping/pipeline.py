@@ -105,12 +105,32 @@ def process_job(job_id: str) -> Job:
         return job
 
     except Exception as exc:  # noqa: BLE001
+        # Full traceback goes to the server console; the UI only gets a short,
+        # human-readable name so the card never overflows.
         log.exception("job %s failed", job.id)
+        short = _short_error(exc)
         job.status = JobStatus.FAILED
-        job.error = str(exc)
-        job.message = f"failed: {exc}"
+        job.error = short
+        job.message = short
         get_store().save_job(job)
         raise
+
+
+def _short_error(exc: Exception) -> str:
+    msg = str(exc)
+    low = msg.lower()
+    if "parsed_crop" in low or ("ffmpeg" in low and "crop" in low):
+        return "Render error: auto-reframe failed (see console). Fell back safely."
+    if "ass" in low or "subtitle" in low or "font" in low:
+        return "Render error: captions failed (see console)."
+    if "yt-dlp" in low or "resolve" in low or "download" in low:
+        return "Download failed — check the URL / try uploading the file."
+    if "no highlights" in low:
+        return "No viral highlights detected in this video."
+    if "whisper" in low or "transcri" in low:
+        return "Transcription failed (see console)."
+    first = msg.strip().splitlines()[0] if msg.strip() else type(exc).__name__
+    return first[:90]
 
 
 def _stereo(media: Path, job_dir: Path) -> Path | None:
