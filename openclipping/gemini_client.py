@@ -140,9 +140,15 @@ class GeminiClient:
                         continue
                     r.raise_for_status()
                     data = r.json()
-                    text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    text = _extract_text(data)   # robust; raises GeminiError w/ detail
                     self._model = m          # remember the one that works
                     return _parse(text, expect_json)
+                except GeminiError as exc:
+                    # 200 but unusable body (blocked / thought-only / empty).
+                    # Retrying the same model won't help — try the next candidate.
+                    last_exc = exc
+                    log.warning("Gemini %s unusable response: %s — trying next candidate", m, exc)
+                    break
                 except (requests.RequestException, KeyError, ValueError) as exc:
                     last_exc = exc
                     log.warning("Gemini call failed (%s attempt %d): %s", m, attempt + 1, exc)
@@ -163,6 +169,38 @@ class GeminiClient:
         )
         return self.generate(prompt, parts=[self.audio_part(audio_bytes, mime)],
                              temperature=0.1, expect_json=True)
+
+
+def _extract_text(data: dict) -> str:
+    """Pull the model's text out of a generateContent response, defensively.
+
+    Newer Gemini models can return a candidate whose `content` has no usable
+    `parts` (safety block, thought-only output, or MAX_TOKENS hit before any
+    visible text). Never raise a bare KeyError — surface the actual reason.
+    """
+    if not isinstance(data, dict):
+        raise GeminiError(f"unexpected response type {type(data).__name__}")
+    if "error" in data:
+        err = data["error"]
+        raise GeminiError(str(err.get("message", err) if isinstance(err, dict) else err))
+    cands = data.get("candidates") or []
+    if not cands:
+        pf = data.get("promptFeedback") or {}
+        raise GeminiError(f"no candidates returned (promptFeedback={pf})")
+    cand = cands[0] or {}
+    content = cand.get("content") or {}
+    parts = content.get("parts") or []
+    # Prefer non-thought text parts; fall back to any text if all are thoughts.
+    texts = [p.get("text", "") for p in parts
+             if isinstance(p, dict) and p.get("text") and not p.get("thought")]
+    if not texts:
+        texts = [p.get("text", "") for p in parts if isinstance(p, dict) and p.get("text")]
+    text = "".join(texts).strip()
+    if not text:
+        fr = cand.get("finishReason", "?")
+        pf = data.get("promptFeedback") or {}
+        raise GeminiError(f"empty response (finishReason={fr}, promptFeedback={pf})")
+    return text
 
 
 def _parse(text: str, expect_json: bool) -> Any:

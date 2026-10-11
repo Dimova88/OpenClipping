@@ -97,11 +97,13 @@ def create_app() -> FastAPI:
 
         if ping and diag["gemini_configured"]:
             try:
-                reply = GeminiClient().generate(
-                    "Reply with exactly one word: pong", expect_json=False, max_tokens=8)
+                gc = GeminiClient()
+                # No token cap: newer flash models are "thinking" models and need
+                # room to reason before emitting text (a tiny cap yields no parts).
+                reply = gc.generate("Reply with exactly one word: pong", expect_json=False)
                 diag["gemini_ok"] = True
                 diag["gemini_reply"] = str(reply).strip()[:40]
-                diag["gemini_model"] = GeminiClient()._model
+                diag["gemini_model"] = gc._model
             except Exception as exc:
                 diag["gemini_ok"] = False
                 diag["gemini_error"] = str(exc)[:200]
